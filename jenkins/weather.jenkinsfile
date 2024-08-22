@@ -5,7 +5,7 @@ pipeline {
         stage("Clone Code") {
             steps {
                 script {
-                    sh 'git clone -b main https://github.com/JawaidAkhtar/weather_app.git'
+                    sh 'git clone -b master https://github.com/MalharKt/Weather-application.git'
                     echo "Code cloned successfully from GitHub"
                 }
             }
