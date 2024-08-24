@@ -2,36 +2,46 @@ pipeline {
     agent any
 
     stages {
+        stage("Clear Workspace And Delete unneccesary images and containers") {
+            steps {
+                script {
+                    
+                    sh ''' 
+                    rm -rf *
+                    docker stop $(docker ps -q) && docker rm $(docker ps -aq) && docker system prune -af --volumes 
+                    echo "Deleted all unccessary images and conainers and cleared workspace "
+                    '''
+                }
+            }
+        }
         stage("Clone Code") {
             steps {
                 script {
-                    sh 'git clone -b master https://github.com/MalharKt/Weather-application.git'
-                    echo "Code cloned successfully from GitHub"
+                    sh ''' 
+                    git clone -b master https://github.com/MalharKt/Weather-application.git
+                    echo "Code cloned successfully from GitHub" 
+                    '''
                 }
             }
         }
         stage("Build Docker Image") {
             steps {
                 script {
-                    // Print the current user and directory for debugging
-                    sh 'whoami'
-                    sh 'pwd'
-                    
-                    // Change directory using dir block
-                    dir('weather_app') {
-                        sh 'docker build -t weather-app-v2 .'
-                    }
-                    echo "Successfully built the Docker image named weather-app-v2"
+                    sh '''
+                          cd Weather-application/weather_app-main
+                          docker build -t weather-app-v2:latest .
+                          '''
+                        
                 }
             }
         }
         stage("Run Container") {
             steps {
-                script {
-                    sh 'docker run -d -p 5000:5000 --name myweather-app weather-app-v2:latest'
+                    sh '''docker run -d -p 5000:5000 --name weather-app weather-app:latest
                     echo "myweather-app is running on port 5000"
+                    '''
                 }
             }
         }
     }
-}
+
