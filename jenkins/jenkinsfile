@@ -1,0 +1,66 @@
+pipeline {
+    agent any
+
+    stages {
+        stage("Clear Workspace And Delete unneccesary images and containers") {
+            steps {
+                script {
+                    
+                    sh ''' 
+                    rm -rf *
+                    docker stop $(docker ps -q) && docker rm $(docker ps -aq) && docker system prune -af --volumes 
+                    echo "Deleted all unccessary images and conainers and cleared workspace "
+                    '''
+                }
+            }
+        }
+        stage("Clone Code") {
+            steps {
+                script {
+                    sh ''' 
+                    git clone https://github.com/Imsk31/Weather-application.git
+                    echo "Code cloned successfully from GitHub" 
+                    '''
+                }
+            }
+        }
+        stage("Build Docker Image") {
+            steps {
+                script {
+                    sh '''
+                          cd Weather-application/weather_app-main
+                          docker build -t shubhamsk512/weather-app:latest .
+                          '''
+                        
+                }
+            }
+        }
+        stage('Docker Login') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                    sh 'echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin'
+                }
+            }
+        }
+        stage("Build and Push Docker Image") {
+            steps {
+                script {
+                    sh '''
+                          cd Weather-application/weather_app-main
+                          docker build -t shubhamsk512/weather-app:latest .
+                          docker push shubhamsk512/weather-app:latest
+                          '''
+                        
+                }
+            }
+        }
+        stage("Run Container") {
+            steps {
+                    sh '''docker run -d -p 5000:5000 --name weather-app weather-app:latest
+                    echo "App Is Succesfully Deployed and Running On Port 5000"
+                    '''
+                }
+            }
+        }
+    }
+
